@@ -1,6 +1,7 @@
 import datetime, psutil, pandas as pd
 import time as t
 import ping3 as p3
+import requests
 
 print("""
 $$\      $$\  $$$$$$\  $$\   $$\ $$$$$$\ $$$$$$$$\  $$$$$$\  $$$$$$$\   $$$$$$\  
@@ -15,9 +16,16 @@ $$ | \_/ $$ | $$$$$$  |$$ | \$$ |$$$$$$\    $$ |    $$$$$$  |$$ |  $$ |$$ |  $$ 
                                                                                  
                                                                                  """)
 
+try:
+    with open(".uid", "r") as uidServidor: 
+        id = uidServidor.read().strip()  # strip remove os espaços em branco
+    arquivo_csv = f"capturaServer_{id}.csv"
+    
+except FileNotFoundError:
+    print("Arquivo .uid não encontrado!")
+    exit(1)
+
 def coletarDados():
-    id = "C0D000"  # Colocar ID aqui <----------------------
-    arquivo_csv = f"captura_{id}.csv"
 
     try:
         pd.read_csv(arquivo_csv, sep=';')
@@ -39,7 +47,7 @@ def coletarDados():
             ultimaLeituraRede = psutil.net_io_counters()
             usoRede = (ultimaLeituraRede.bytes_sent - primeiraLeituraRede.bytes_sent) + \
                       (ultimaLeituraRede.bytes_recv - primeiraLeituraRede.bytes_recv)
-            usoRedeMB = round(usoRede / (1024 * 1024), 2)
+            usoRedeMB = usoRede / (1024 * 1024)
             primeiraLeituraRede = ultimaLeituraRede
             tempoRespostaRede = float((f'{p3.ping("google.com"):.3f}'))
 
@@ -59,3 +67,21 @@ def coletarDados():
         print("\nScript Interrompido.")
 
 coletarDados()
+
+
+def enviarCSV():
+
+    url = "http://localhost:3333/bucket/upload" #<--- trocar localHost pelo ip da instancia
+    
+    data = {  
+            "servidorId": id   
+        }
+    
+    with open(arquivo_csv, "rb") as f:
+        files = {"file": (arquivo_csv, f, "text/csv")}
+        response = requests.post(url, files=files)
+
+    print(response.status_code)
+    print(response.json())
+
+enviarCSV()
