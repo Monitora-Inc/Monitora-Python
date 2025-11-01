@@ -17,9 +17,11 @@ $$ | \_/ $$ | $$$$$$  |$$ | \$$ |$$$$$$\    $$ |    $$$$$$  |$$ |  $$ |$$ |  $$ 
                                                                                  """)
 
 try:
-    with open(".uid", "r") as uidServidor: 
+    with open(".uuid", "r") as uidServidor: 
         id = uidServidor.read().strip()  # strip remove os espaços em branco
-    arquivo_csv = f"capturaServer_{id}.csv"
+
+    dtHrCaptura = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
+    arquivo_csv = f"captura_{dtHrCaptura}.csv"
     
 except FileNotFoundError:
     print("Arquivo .uid não encontrado!")
@@ -71,15 +73,16 @@ coletarDados()
 
 def enviarCSV():
 
-    url = "http://localhost:3333/bucket/upload" #<--- trocar localHost pelo ip da instancia
+    url = "http://98.90.233.18:3333/bucket/upload" #<--- trocar localHost pelo ip da instancia
     
     data = {  
             "servidorId": id   
         }
+    print(id)
     
     with open(arquivo_csv, "rb") as f:
         files = {"file": (arquivo_csv, f, "text/csv")}
-        response = requests.post(url, files=files)
+        response = requests.post(url, data=data, files=files)
 
     print(response.status_code)
     print(response.json())
