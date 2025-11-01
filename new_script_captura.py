@@ -2,6 +2,7 @@ import datetime, psutil, pandas as pd
 import time as t
 import ping3 as p3
 import requests
+import os
 
 print("""
 $$\      $$\  $$$$$$\  $$\   $$\ $$$$$$\ $$$$$$$$\  $$$$$$\  $$$$$$$\   $$$$$$\  
@@ -16,15 +17,30 @@ $$ | \_/ $$ | $$$$$$  |$$ | \$$ |$$$$$$\    $$ |    $$$$$$  |$$ |  $$ |$$ |  $$ 
                                                                                  
                                                                                  """)
 
+ip_arquivo = "../ip_monitora.txt"
+
+
+# Pega IP da instância
+if os.path.exists(ip_arquivo):
+    with open(ip_arquivo, "r") as f:
+        ip_instancia = f.read().strip()
+    print(f"IP encontrado no arquivo: {ip_instancia}")
+else:
+    print("Arquivo ip_monitora.txt não encontrado, usando IP padrão.")
+    ip_instancia = "localhost" 
+
 try:
-    with open(".uuid", "r") as uidServidor: 
-        id = uidServidor.read().strip()  # strip remove os espaços em branco
+    uuid_path = os.path.join(os.path.dirname(__file__), '..', 'uuid_servidor.txt')
+    uuid_path = os.path.abspath(uuid_path)
+
+    with open(uuid_path, "r") as uidServidor:
+        id = uidServidor.read().strip()  # strip remove espaços em branco
 
     dtHrCaptura = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
     arquivo_csv = f"captura_{dtHrCaptura}.csv"
-    
+
 except FileNotFoundError:
-    print("Arquivo .uid não encontrado!")
+    print("Arquivo uuid_servidor.txt não encontrado!")
     exit(1)
 
 def coletarDados():
@@ -36,7 +52,7 @@ def coletarDados():
         primeira_vez = True
 
     primeiraLeituraRede = psutil.net_io_counters()
-    i = 60
+    i = 1
 
     try:
         while i > 0:
@@ -61,7 +77,7 @@ def coletarDados():
             df.to_csv(arquivo_csv, encoding="utf-8", header=primeira_vez, index=False, mode='a', sep=';')
             primeira_vez = False
             i -= 1
-            t.sleep(10)
+            t.sleep(1)
 
     except Exception as e:
         print(f"Erro: {e}")
@@ -73,7 +89,7 @@ coletarDados()
 
 def enviarCSV():
 
-    url = "http://98.90.233.18:3333/bucket/upload" #<--- trocar localHost pelo ip da instancia
+    url = f"http://{ip_instancia}:3333/bucket/upload" #<--- trocar localHost pelo ip da instancia
     
     data = {  
             "servidorId": id   
