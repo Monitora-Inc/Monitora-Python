@@ -52,7 +52,7 @@ def coletarDados():
         primeira_vez = True
 
     primeiraLeituraRede = psutil.net_io_counters()
-    i = 1
+    i = 60
 
     try:
         while i > 0:
@@ -77,7 +77,7 @@ def coletarDados():
             df.to_csv(arquivo_csv, encoding="utf-8", header=primeira_vez, index=False, mode='a', sep=';')
             primeira_vez = False
             i -= 1
-            t.sleep(1)
+            t.sleep(10)
 
     except Exception as e:
         print(f"Erro: {e}")
