@@ -30,12 +30,12 @@ else:
     ip_instancia = "localhost" 
 
 try:
-    uuid_path = os.path.join(os.path.dirname(__file__), '..', 'uuid_servidor.txt')
-    uuid_path = os.path.abspath(uuid_path)
+    #uuid_path = os.path.join(os.path.dirname(__file__), '..', 'uuid_servidor.txt')
+    #uuid_path = os.path.abspath(uuid_path)
 
-    with open(uuid_path, "r") as uidServidor:
-        id = uidServidor.read().strip()  # strip remove espaços em branco
-
+    #with open(uuid_path, "r") as uidServidor:
+        #id = uidServidor.read().strip()  # strip remove espaços em branco
+    id = 1
     dtHrCaptura = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
     arquivo_csv = f"captura_{dtHrCaptura}.csv"
 
@@ -60,7 +60,7 @@ def coletarDados():
             
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             cpu = psutil.cpu_percent(percpu=False)
-            ram = psutil.virtual_memory().percent
+            ram = psutil.virtual_memory()
             disco = psutil.disk_usage('/').percent
             ultimaLeituraRede = psutil.net_io_counters()
             usoRede = (ultimaLeituraRede.bytes_sent - primeiraLeituraRede.bytes_sent) + \
@@ -103,4 +103,4 @@ def enviarCSV():
     print(response.status_code)
     print(response.json())
 
-enviarCSV()
+#enviarCSV()
