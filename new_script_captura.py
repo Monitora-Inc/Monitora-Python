@@ -3,6 +3,7 @@ import time as t
 import ping3 as p3
 import requests
 import os
+import socket
 
 print("""
 $$\      $$\  $$$$$$\  $$\   $$\ $$$$$$\ $$$$$$$$\  $$$$$$\  $$$$$$$\   $$$$$$\  
@@ -17,7 +18,7 @@ $$ | \_/ $$ | $$$$$$  |$$ | \$$ |$$$$$$\    $$ |    $$$$$$  |$$ |  $$ |$$ |  $$ 
                                                                                  
                                                                                  """)
 
-ip_arquivo = "../ip_monitora.txt"
+ip_arquivo = "ip_monitora.txt"
 
 
 # Pega IP da instância
@@ -30,7 +31,7 @@ else:
     ip_instancia = "localhost" 
 
 try:
-    uuid_path = os.path.join(os.path.dirname(__file__), '..', 'uuid_servidor.txt')
+    uuid_path = os.path.join(os.path.dirname(__file__), 'uuid_servidor.txt')
     uuid_path = os.path.abspath(uuid_path)
 
     with open(uuid_path, "r") as uidServidor:
@@ -55,6 +56,25 @@ def coletarDados():
     i = 60
 
     try:
+        nic = psutil.net_if_stats()
+        addrs = psutil.net_if_addrs()
+        capacidadeNic =0 
+
+        for  interface, info in nic.items():
+            nomeInterface = interface.lower()
+            if nomeInterface.startswith(("lo", "docker", "veth", "vm", "br-", "wlx", "virbr", "tap", "ham")):
+                continue
+
+            tem_ipv4 = any(a.family == socket.AF_INET for a in addrs.get(interface, []))
+            if not tem_ipv4:
+                continue
+        
+            if info.speed > 0:
+             print(f"{info.speed} Mbps")
+             
+             if info.speed > capacidadeNic:
+                capacidadeNic = info.speed
+
         while i > 0:
             quantidade_processos = sum(1 for _ in psutil.process_iter(['name']))
             
@@ -68,11 +88,12 @@ def coletarDados():
             usoRedeMB = usoRede / (1024 * 1024)
             primeiraLeituraRede = ultimaLeituraRede
             tempoRespostaRede = float((f'{p3.ping("google.com"):.3f}'))
+            
 
-            print(f"ID: {id} | {timestamp} | CPU: {cpu}% | RAM: {ram}% | Disco: {disco}% | Uso de Rede: {usoRedeMB} MB | Latência: {tempoRespostaRede} | Quantidade de Processos: {quantidade_processos}")
+            print(f"ID: {id} | {timestamp} | CPU: {cpu}% | RAM: {ram}% | Disco: {disco}% | Uso de Rede: {usoRedeMB} MB | Latência: {tempoRespostaRede} | Capacidade NIC: {capacidadeNic} | Quantidade de Processos: {quantidade_processos}")
 
-            df = pd.DataFrame([[id, timestamp, cpu, ram, disco, usoRedeMB, tempoRespostaRede, quantidade_processos]],
-                              columns=['id', 'timestamp', 'cpu', 'ram', 'disco', 'usoRede', 'latencia', 'qtd_processos'])
+            df = pd.DataFrame([[id, timestamp, cpu, ram, disco, usoRedeMB, tempoRespostaRede, capacidadeNic, quantidade_processos]],
+                              columns=['id', 'timestamp', 'cpu', 'ram', 'disco', 'usoRede', 'latencia', 'nic_mbps', 'qtd_processos'])
 
             df.to_csv(arquivo_csv, encoding="utf-8", header=primeira_vez, index=False, mode='a', sep=';')
             primeira_vez = False
