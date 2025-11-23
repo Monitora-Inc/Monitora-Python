@@ -4,6 +4,7 @@ import ping3 as p3
 import requests
 import os
 import socket
+import win32pdh as win
 
 print("""
 $$\      $$\  $$$$$$\  $$\   $$\ $$$$$$\ $$$$$$$$\  $$$$$$\  $$$$$$$\   $$$$$$\  
@@ -20,6 +21,15 @@ $$ | \_/ $$ | $$$$$$  |$$ | \$$ |$$$$$$\    $$ |    $$$$$$  |$$ |  $$ |$$ |  $$ 
 
 ip_arquivo = "../ip_monitora.txt"
 
+# Linux "posix" | windows "nt"
+def verificacaoSO():
+    if(os.name == "nt"):
+        return "Windows"
+    elif (os.name == "posix"):
+        return "Linux"
+    else:
+        print("Sistema não suportado!")
+        exit(1)
 
 # Pega IP da instância
 if os.path.exists(ip_arquivo):
@@ -36,7 +46,7 @@ try:
 
     with open(uuid_path, "r") as uidServidor:
         id = uidServidor.read().strip()  # strip remove espaços em branco
-
+    # id = 1
     dtHrCaptura = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M')
     arquivo_csv = f"captura_{dtHrCaptura}.csv"
 
@@ -97,7 +107,7 @@ def coletarDados():
             
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             cpu = psutil.cpu_percent(percpu=False)
-            ram = psutil.virtual_memory().percent
+            ram = psutil.virtual_memory()
             disco = psutil.disk_usage('/').percent
             ultimaLeituraRede = psutil.net_io_counters(pernic=True)[nomeInterface]
             usoRede = (ultimaLeituraRede.bytes_sent - primeiraLeituraRede.bytes_sent) + \
@@ -108,14 +118,52 @@ def coletarDados():
             io = psutil.net_io_counters(pernic=True)[nomeInterface]
             pckg_env =   io.packets_sent
             pckg_rcbd =   io.packets_recv
-            pckg_perdidos =    io.dropin +   io.dropout 
+            pckg_perdidos =    io.dropin +   io.dropout
+
+            if verificacaoSO() == "Windows":
+                ramFria = 0
+                falhas_cache = 0
+                # PEGANDO ITENS RAM
+                try:
+                    pastas = [
+                                win.MakeCounterPath((None, "Memória", None, None, -1, "Bytes de Prioridade Normal de Cache em Espera")), 
+                                win.MakeCounterPath((None, "Memória", None, None, -1, "Bytes de Reserva de Cache em Espera")),
+                                win.MakeCounterPath((None, "Memória", None, None, -1, "Bytes Principais de Cache em Espera")),
+                                win.MakeCounterPath((None, "Memória", None, None, -1, "Falhas de cache/s"))
+                              ]
+                    
+                    for pasta in pastas:
+                        if (pasta == win.MakeCounterPath((None, "Memória", None, None, -1, "Falhas de cache/s"))):
+                            print(pasta)
+                            break
+                        query = win.OpenQuery()
+                        counter = win.AddCounter(query, pasta)
+                        win.CollectQueryData(query)
+                        _, value = win.GetFormattedCounterValue(counter, win.PDH_FMT_LARGE)
+                        ramFria += value
+                    
+                    ramQuente = ram.used - ramFria
+
+                except Exception as e:
+                    print(e)   
+            else:
+                ramQuente = ram.active
+                ramFria = ram.inactive
+                
+            converteGiga = 1024 ** 3
+
+            print(f"ID: {id} | {timestamp} | CPU: {cpu}% | RAM-Total: {(ram.total/converteGiga):.2f}GB | RAM-Usada: {ram.used/converteGiga:.2f}GB | RAM-Quente: {ramQuente/converteGiga:.2f}GB | RAM-Fria: {ramFria/converteGiga:.2f}GB | Disco: {disco}% | Uso de Rede: {usoRedeMB} MB | Latência: {tempoRespostaRede} | Capacidade NIC: {capacidadeNic} |" +
+                  f" Pacotes enviados: {pckg_env} | Pacotes Recebidos: {pckg_rcbd} | Pacotes Perdidos: {pckg_perdidos} | Quantidade de Processos: {quantidade_processos}")
+
+            # Limitando decimais valores!
+            ramTotal = (f"{(ram.total/converteGiga):.2f}")
+            ramUsada = (f"{ram.used/converteGiga:.2f}")
+            ramPercent = (f"{((ram.used/ram.total) * 100):.2f}")
+            ramQuente = (f"{ramQuente/converteGiga:.2f}")
+            ramFria = (f"{ramFria/converteGiga:.2f}")
             
-
-            print(f"ID: {id} | {timestamp} | CPU: {cpu}% | RAM: {ram}% | Disco: {disco}% | Uso de Rede: {usoRedeMB} MB | Latência: {tempoRespostaRede} | Capacidade NIC: {capacidadeNic} |" +
-                  f"Pacotes enviados: {pckg_env} | Pacotes Recebidos: {pckg_rcbd} | Pacotes Perdidos: {pckg_perdidos} | Quantidade de Processos: {quantidade_processos}")
-
-            df = pd.DataFrame([[id, timestamp, cpu, ram, disco, usoRedeMB, tempoRespostaRede, capacidadeNic, pckg_env, pckg_rcbd, pckg_perdidos, quantidade_processos]],
-                              columns=['id', 'timestamp', 'cpu', 'ram', 'disco', 'usoRede', 'latencia', 'nic_mbps', 'pacotes_enviados', 'pacotes_recebidos', 'pacotes_perdidos', 'qtd_processos'])
+            df = pd.DataFrame([[id, timestamp, cpu, float(ramTotal), float(ramUsada), float(ramQuente), float(ramFria), disco, usoRedeMB, tempoRespostaRede, capacidadeNic, pckg_env, pckg_rcbd, pckg_perdidos, quantidade_processos]],
+                              columns=['id', 'timestamp', 'cpu', 'total_ram', 'ram_usada', 'ram_quente', 'ram_fria', 'disco', 'usoRede', 'latencia', 'nic_mbps', 'pacotes_enviados', 'pacotes_recebidos', 'pacotes_perdidos', 'qtd_processos'])
 
             df.to_csv(arquivo_csv, encoding="utf-8", header=primeira_vez, index=False, mode='a', sep=';')
             primeira_vez = False
