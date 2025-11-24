@@ -152,7 +152,7 @@ def coletarDados():
                 
             converteGiga = 1024 ** 3
 
-            print(f"ID: {id} | {timestamp} | CPU: {cpu}% | RAM-Total: {(ram.total/converteGiga):.2f}GB | RAM-Usada: {ram.used/converteGiga:.2f}GB | RAM-Quente: {ramQuente/converteGiga:.2f}GB | RAM-Fria: {ramFria/converteGiga:.2f}GB | Disco: {disco}% | Uso de Rede: {usoRedeMB} MB | Latência: {tempoRespostaRede} | Capacidade NIC: {capacidadeNic} |" +
+            print(f"ID: {id} | {timestamp} | CPU: {cpu}% | RAM-Total: {(ram.total/converteGiga):.2f}GB | RAM-Usada: {ram.used/converteGiga:.2f}GB | RAM-Percent: {(ram.used/ram.total)/converteGiga} | RAM-Quente: {ramQuente/converteGiga:.2f}GB | RAM-Fria: {ramFria/converteGiga:.2f}GB | Disco: {disco}% | Uso de Rede: {usoRedeMB} MB | Latência: {tempoRespostaRede} | Capacidade NIC: {capacidadeNic} |" +
                   f" Pacotes enviados: {pckg_env} | Pacotes Recebidos: {pckg_rcbd} | Pacotes Perdidos: {pckg_perdidos} | Quantidade de Processos: {quantidade_processos}")
 
             # Limitando decimais valores!
@@ -162,8 +162,8 @@ def coletarDados():
             ramQuente = (f"{ramQuente/converteGiga:.2f}")
             ramFria = (f"{ramFria/converteGiga:.2f}")
             
-            df = pd.DataFrame([[id, timestamp, cpu, float(ramTotal), float(ramUsada), float(ramQuente), float(ramFria), disco, usoRedeMB, tempoRespostaRede, capacidadeNic, pckg_env, pckg_rcbd, pckg_perdidos, quantidade_processos]],
-                              columns=['id', 'timestamp', 'cpu', 'total_ram', 'ram_usada', 'ram_quente', 'ram_fria', 'disco', 'usoRede', 'latencia', 'nic_mbps', 'pacotes_enviados', 'pacotes_recebidos', 'pacotes_perdidos', 'qtd_processos'])
+            df = pd.DataFrame([[id, timestamp, cpu, float(ramTotal), float(ramUsada), float(ramPercent), float(ramQuente), float(ramFria), disco, usoRedeMB, tempoRespostaRede, capacidadeNic, pckg_env, pckg_rcbd, pckg_perdidos, quantidade_processos]],
+                              columns=['id', 'timestamp', 'cpu', 'total_ram', 'ram_usada', 'ram_percent', 'ram_quente', 'ram_fria', 'disco', 'usoRede', 'latencia', 'nic_mbps', 'pacotes_enviados', 'pacotes_recebidos', 'pacotes_perdidos', 'qtd_processos'])
 
             df.to_csv(arquivo_csv, encoding="utf-8", header=primeira_vez, index=False, mode='a', sep=';')
             primeira_vez = False
