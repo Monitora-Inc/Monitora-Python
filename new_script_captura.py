@@ -152,7 +152,7 @@ def coletarDados():
                 
             converteGiga = 1024 ** 3
 
-            print(f"ID: {id} | {timestamp} | CPU: {cpu}% | RAM-Total: {(ram.total/converteGiga):.2f}GB | RAM-Usada: {ram.used/converteGiga:.2f}GB | RAM-Percent: {(ram.used/ram.total)/converteGiga} | RAM-Quente: {ramQuente/converteGiga:.2f}GB | RAM-Fria: {ramFria/converteGiga:.2f}GB | Disco: {disco}% | Uso de Rede: {usoRedeMB} MB | Latência: {tempoRespostaRede} | Capacidade NIC: {capacidadeNic} |" +
+            print(f"ID: {id} | {timestamp} | CPU: {cpu}% | RAM-Total: {(ram.total/converteGiga):.2f}GB | RAM-Usada: {ram.used/converteGiga:.2f}GB | RAM-Percent: {(ram.used/ram.total) * 100:.2f}% | RAM-Quente: {ramQuente/converteGiga:.2f}GB | RAM-Fria: {ramFria/converteGiga:.2f}GB | Disco: {disco}% | Uso de Rede: {usoRedeMB} MB | Latência: {tempoRespostaRede} | Capacidade NIC: {capacidadeNic} |" +
                   f" Pacotes enviados: {pckg_env} | Pacotes Recebidos: {pckg_rcbd} | Pacotes Perdidos: {pckg_perdidos} | Quantidade de Processos: {quantidade_processos}")
 
             # Limitando decimais valores!
