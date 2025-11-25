@@ -107,21 +107,20 @@ def coletarDados():
             ramQuente = ram.active
             ramFria = ram.inactive
 
-        converteGiga = 1024 ** 3
-        ramTotal = (f"{(ram.total/converteGiga):.2f}")
-        ramUsada = (f"{ram.used/converteGiga:.2f}")
+        ramTotal = (f"{(ram.total)}")
+        ramUsada = (f"{ram.used}")
         ramPercent = (f"{((ram.used/ram.total) * 100):.2f}")
-        ramQuente = (f"{ramQuente/converteGiga:.2f}")
-        ramFria = (f"{ramFria/converteGiga:.2f}")
+        ramQuente = (f"{ramQuente}")
+        ramFria = (f"{ramFria}")
 
         print(
         f"{timestamp} | "
         f"CPU: {cpu}% | "
-        f"RAM Total: {ramTotal} GB | "
-        f"RAM Usada: {ramUsada} GB | "
+        f"RAM Total: {ramTotal} Bytes | "
+        f"RAM Usada: {ramUsada} Bytes | "
         f"RAM %: {ramPercent}% | "
-        f"RAM Quente: {ramQuente} GB | "
-        f"RAM Fria: {ramFria} GB | "
+        f"RAM Quente: {ramQuente} Bytes | "
+        f"RAM Fria: {ramFria} Bytes | "
         f"Disco: {disco}% | "
         f"Rede(MB): {usoRedeMB:.2f} | "
         f"Latência: {tempoRespostaRede} | "
