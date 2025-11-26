@@ -49,7 +49,7 @@ def coletarDados():
     addrs = psutil.net_if_addrs()
     entradaSaidaRede = psutil.net_io_counters(pernic=True)
     nomeInterface= ''
-    capacidadeNic = 0
+   
 
     for interface, addr_list in addrs.items():
         if interface.lower().startswith(("lo", "docker", "veth", "vm", "br-", "wlx", "virbr", "tap", "ham")):
@@ -63,7 +63,6 @@ def coletarDados():
             continue
         ativa = (io.bytes_recv + io.bytes_sent) > 0
         if ativa:
-            capacidadeNic = infoNic.speed
             nomeInterface = interface
             break
 
@@ -78,8 +77,10 @@ def coletarDados():
         ram = psutil.virtual_memory()
         disco = psutil.disk_usage('/').percent
         ultimaLeituraRede = psutil.net_io_counters(pernic=True)[nomeInterface]
-        usoRede = (ultimaLeituraRede.bytes_sent - primeiraLeituraRede.bytes_sent) + (ultimaLeituraRede.bytes_recv - primeiraLeituraRede.bytes_recv)
-        usoRedeMB = usoRede / (1024 * 1024)
+        bytesEnviados = ultimaLeituraRede.bytes_sent - primeiraLeituraRede.bytes_sent
+        bytesRecebidos = ultimaLeituraRede.bytes_recv - primeiraLeituraRede.bytes_recv
+        usoRede = bytesEnviados + bytesRecebidos
+        # usoRedeMB = usoRede / (1024 * 1024)
         primeiraLeituraRede = ultimaLeituraRede
         tempoRespostaRede = float((f'{p3.ping("google.com"):.3f}'))
         io = psutil.net_io_counters(pernic=True)[nomeInterface]
@@ -122,9 +123,9 @@ def coletarDados():
         f"RAM Quente: {ramQuente} Bytes | "
         f"RAM Fria: {ramFria} Bytes | "
         f"Disco: {disco}% | "
-        f"Rede(MB): {usoRedeMB:.2f} | "
+        f"Bytes Enviados (Rede): {bytesEnviados} |"
+        f"Bytes Recebidos (Rede): {bytesRecebidos} |"
         f"Latência: {tempoRespostaRede} | "
-        f"NIC: {capacidadeNic}Mbps | "
         f"Pacotes Enviados: {pckg_env} | "
         f"Pacotes Recebidos: {pckg_rcbd} | "
         f"Pacotes Perdidos: {pckg_perdidos} | "
@@ -132,8 +133,8 @@ def coletarDados():
         f"Uptime (Segundos): {uptime_segundos}s"
     )
 
-        df = pd.DataFrame([[id, timestamp, cpu, float(ramTotal), float(ramUsada), float(ramPercent), float(ramQuente), float(ramFria), disco, usoRedeMB, tempoRespostaRede, capacidadeNic, pckg_env, pckg_rcbd, pckg_perdidos, quantidade_processos, uptime_segundos]],
-            columns=['id','timestamp','cpu','total_ram','ram_usada','ram_percent','ram_quente','ram_fria','disco_percent','usoRede','latencia','nic_mbps','pacotes_enviados','pacotes_recebidos','pacotes_perdidos','qtd_processos','uptime_segundos'])
+        df = pd.DataFrame([[id, timestamp, cpu, float(ramTotal), float(ramUsada), float(ramPercent), float(ramQuente), float(ramFria), disco, bytesEnviados, bytesRecebidos, tempoRespostaRede, pckg_env, pckg_rcbd, pckg_perdidos, quantidade_processos, uptime_segundos]],
+            columns=['id','timestamp','cpu','total_ram','ram_usada','ram_percent','ram_quente','ram_fria','disco_percent','bytesEnv', 'bytesRecb','latencia','pacotes_enviados','pacotes_recebidos','pacotes_perdidos','qtd_processos','uptime_segundos'])
 
         df.to_csv(arquivo_csv, encoding="utf-8", header=not os.path.exists(arquivo_csv), index=False, mode='a', sep=';')
         leituras -= 1
