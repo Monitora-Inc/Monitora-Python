@@ -143,13 +143,42 @@ def coletarDados():
 def enviarCSV():
     url = f"http://{ip_instancia}:3333/bucket/upload"
     data = {"servidorId": id}
+
+    # 1. Verificar se o arquivo existe
+    if not os.path.exists(arquivo_csv):
+        print(f"[ERRO] Arquivo CSV '{arquivo_csv}' não encontrado. Nada a enviar!")
+        return
+
+    # 2. Verificar se o arquivo está vazio
+    if os.path.getsize(arquivo_csv) == 0:
+        print(f"[ERRO] Arquivo CSV '{arquivo_csv}' está vazio. Envio cancelado.")
+        return
+
     try:
         with open(arquivo_csv, "rb") as f:
             files = {"file": (arquivo_csv, f, "text/csv")}
-            requests.post(url, data=data, files=files, timeout=5)
-    except:
-        print("Sem conexão com o bucket!")
-        pass
+
+            print(f"[INFO] Enviando CSV '{arquivo_csv}' para o bucket...")
+            resposta = requests.post(url, data=data, files=files, timeout=10)
+
+            # 3. Verificar se a API realmente respondeu OK
+            if resposta.status_code == 200:
+                print(f"[SUCESSO] CSV '{arquivo_csv}' enviado com sucesso!")
+            else:
+                print(
+                    f"[ERRO] O servidor respondeu com código {resposta.status_code} "
+                    f"→ Mensagem: {resposta.text}"
+                )
+
+    except requests.exceptions.Timeout:
+        print("[ERRO] Timeout ao tentar enviar o CSV! A API não respondeu a tempo.")
+
+    except requests.exceptions.ConnectionError:
+        print("[ERRO] Falha de conexão com a API! A instância pode estar offline.")
+
+    except Exception as e:
+        print(f"[ERRO] Falha inesperada ao enviar CSV: {e}")
+
 
 ultimo_csv = None
 while True:
