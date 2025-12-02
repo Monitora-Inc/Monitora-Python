@@ -42,7 +42,7 @@ try:
     with open(uuid_path, "r") as uidServidor:
         id = uidServidor.read().strip()
 except FileNotFoundError:
-    id = "0"
+    id = "abcde"
 
 def coletarDados():
     nic = psutil.net_if_stats()
@@ -52,7 +52,7 @@ def coletarDados():
    
 
     for interface, addr_list in addrs.items():
-        if interface.lower().startswith(("lo", "docker", "veth", "vm", "br-", "wlx", "virbr", "tap", "ham")):
+        if interface.lower().startswith(("radmin", "lo", "docker", "veth", "vm", "br-", "wlx", "virbr", "tap", "ham")):
             continue
         tem_ipv4 = any(a.family == socket.AF_INET for a in addr_list)
         if not tem_ipv4:
